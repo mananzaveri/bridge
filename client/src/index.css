@@ -109,3 +109,8 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+body {
+  background: #f1debd;
+  margin: 0;
+}
