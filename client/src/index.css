@@ -50,10 +50,6 @@
   }
 }
 
-body {
-  margin: 0;
-}
-
 #root {
   width: 1126px;
   max-width: 100%;
@@ -113,4 +109,5 @@ code {
 body {
   background: #f1debd;
   margin: 0;
+  padding: 0;
 }

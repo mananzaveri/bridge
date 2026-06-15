@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Soundfont from 'soundfont-player'
 import { getDiatonicChords, getChromaticChords, CHORD_NOTES, ALL_KEYS } from './utils/musicTheory'
 import { COLORS } from './theme'
+import SavedProgressions from './SavedProgressions'
 
 const STRUM_DELAY = 0.04
 
@@ -32,6 +33,39 @@ export default function ChordPlayer({ suggestedKey, emotion }) {
   const stopRef = useRef(false)
   const sessionRef = useRef(0)
   const tapFlashRef = useRef(null)
+
+  const [saveTitle, setSaveTitle] = useState('')
+  const [saved, setSaved] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('bridge-progressions')) || []
+    } catch { return [] }
+  })
+
+  const saveProgression = () => {
+    if (!saveTitle.trim() || progression.length === 0) return
+    const entry = {
+      title: saveTitle.trim(),
+      key: selectedKey,
+      emotion,
+      chords: progression,
+      savedAt: new Date().toISOString(),
+    }
+    const updated = [entry, ...saved]
+    setSaved(updated)
+    localStorage.setItem('bridge-progressions', JSON.stringify(updated))
+    setSaveTitle('')
+  }
+
+  const deleteProgression = (index) => {
+    const updated = saved.filter((_, i) => i !== index)
+    setSaved(updated)
+    localStorage.setItem('bridge-progressions', JSON.stringify(updated))
+  }
+
+  const loadProgression = (item) => {
+    setSelectedKey(item.key)
+    setProgression(item.chords)
+  }
 
   useEffect(() => {
     setSelectedKey(suggestedKey)
@@ -380,6 +414,46 @@ export default function ChordPlayer({ suggestedKey, emotion }) {
 
         </div>
 
+        {progression.length > 0 && (
+        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+          <input
+            type="text"
+            value={saveTitle}
+            onChange={e => setSaveTitle(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && saveProgression()}
+            placeholder="Name this progression..."
+            style={{
+              flex: 1,
+              padding: '7px 10px',
+              background: COLORS.surface,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '6px',
+              color: COLORS.textPrimary,
+              fontSize: '12px',
+              fontFamily: 'inherit',
+              outline: 'none',
+            }}
+          />
+          <button
+            onClick={saveProgression}
+            disabled={!saveTitle.trim()}
+            style={{
+              padding: '7px 14px',
+              background: saveTitle.trim() ? COLORS.primary : COLORS.surface,
+              color: saveTitle.trim() ? 'white' : COLORS.textGhost,
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '12px',
+              cursor: saveTitle.trim() ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit',
+              letterSpacing: '0.05em',
+            }}
+          >
+            save
+          </button>
+        </div>
+      )}
+
         {/* DIVIDER */}
         <div style={s.divider} />
 
@@ -477,6 +551,11 @@ export default function ChordPlayer({ suggestedKey, emotion }) {
 
         </div>
       </div>
+      <SavedProgressions
+        saved={saved}
+        onLoad={loadProgression}
+        onDelete={deleteProgression}
+      />
     </div>
   )
 }
