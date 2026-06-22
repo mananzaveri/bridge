@@ -410,49 +410,49 @@ export default function ChordPlayer({ suggestedKey, emotion }) {
                 </div>
               ))}
             </div>
+            {progression.length > 0 && (
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="text"
+                  value={saveTitle}
+                  onChange={e => setSaveTitle(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveProgression()}
+                  placeholder="Name this progression..."
+                  style={{
+                    flex: 1,
+                    padding: '7px 10px',
+                    background: COLORS.surface,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '6px',
+                    color: COLORS.textPrimary,
+                    fontSize: '12px',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={saveProgression}
+                  disabled={!saveTitle.trim()}
+                  style={{
+                    padding: '7px 14px',
+                    background: saveTitle.trim() ? COLORS.primary : COLORS.surface,
+                    color: saveTitle.trim() ? 'white' : COLORS.textGhost,
+                    border: `1px solid ${saveTitle.trim() ? COLORS.primary : COLORS.border}`,
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    cursor: saveTitle.trim() ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit',
+                    letterSpacing: '0.05em',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  save
+                </button>
+              </div>
+            )}
           </div>
 
         </div>
-
-        {progression.length > 0 && (
-        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-          <input
-            type="text"
-            value={saveTitle}
-            onChange={e => setSaveTitle(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && saveProgression()}
-            placeholder="Name this progression..."
-            style={{
-              flex: 1,
-              padding: '7px 10px',
-              background: COLORS.surface,
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: '6px',
-              color: COLORS.textPrimary,
-              fontSize: '12px',
-              fontFamily: 'inherit',
-              outline: 'none',
-            }}
-          />
-          <button
-            onClick={saveProgression}
-            disabled={!saveTitle.trim()}
-            style={{
-              padding: '7px 14px',
-              background: saveTitle.trim() ? COLORS.primary : COLORS.surface,
-              color: saveTitle.trim() ? 'white' : COLORS.textGhost,
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '12px',
-              cursor: saveTitle.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit',
-              letterSpacing: '0.05em',
-            }}
-          >
-            save
-          </button>
-        </div>
-      )}
 
         {/* DIVIDER */}
         <div style={s.divider} />
