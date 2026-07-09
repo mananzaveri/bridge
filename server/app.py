@@ -1,16 +1,10 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from transformers import pipeline
 import random
+from nrclex import NRCLex
 
 app = Flask(__name__)
 CORS(app)
-
-emotion_analyzer = pipeline(
-    'text-classification',
-    model='j-hartmann/emotion-english-distilroberta-base',
-    return_all_scores=True  # get scores for all 7 emotions, not just the top one
-)
 
 # Each emotion maps to a pool of keys that fit its character
 EMOTION_KEYS = {
@@ -22,6 +16,28 @@ EMOTION_KEYS = {
     'surprise': ['D', 'A', 'G', 'E', 'B'],
     'neutral':  ['C', 'Am', 'G', 'Em', 'F'],
 }
+
+RELEVANT_EMOTIONS = ['joy', 'sadness', 'anger', 'fear', 'disgust', 'surprise']
+
+def get_emotion_scores(lyrics):
+    """
+    NRCLex counts lexicon matches per emotion. We keep only the 7
+    categories EMOTION_KEYS understands, normalize the raw counts into
+    proportions (0-1, summing to 1) so they're shaped exactly like the
+    old transformer output, and fall back to neutral if nothing matched.
+    """
+    text_object = NRCLex(lyrics[:512])
+    raw_counts = text_object.raw_emotion_scores
+
+    filtered = {e: raw_counts.get(e, 0) for e in RELEVANT_EMOTIONS}
+    total = sum(filtered.values())
+
+    if total == 0:
+        return {'neutral': 1.0, **{e: 0.0 for e in RELEVANT_EMOTIONS}}
+
+    normalized = {e: c / total for e, c in filtered.items()}
+    normalized['neutral'] = 0.0
+    return normalized
 
 def blend_key(emotion_scores):
     """
@@ -81,9 +97,7 @@ def analyze():
 
     # return_all_scores=True gives us a list of dicts: [{label, score}, ...]
     # We reshape it into a clean {emotion: score} dict for easier use
-    raw = emotion_analyzer(lyrics[:512])
-    raw_results = raw[0] if isinstance(raw[0], list) else raw
-    emotion_scores = {r['label']: r['score'] for r in raw_results}    
+    emotion_scores = get_emotion_scores(lyrics)   
 
     primary_emotion = get_primary_emotion(emotion_scores)
     suggested_key = blend_key(emotion_scores)
