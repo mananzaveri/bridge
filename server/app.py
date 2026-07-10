@@ -33,11 +33,11 @@ def get_emotion_scores(lyrics):
     proportions (0-1, summing to 1) so they're shaped exactly like the
     old transformer output, and fall back to neutral if nothing matched.
     """
-    text_object = NRCLex(lyrics[:512])
+    text_object = NRCLex()
+    text_object.load_raw_text(lyrics[:512])
     raw_counts = text_object.raw_emotion_scores
 
     if not raw_counts:
-        # Lexicon returned nothing usable — fall back to neutral rather than crashing
         return {'neutral': 1.0, **{e: 0.0 for e in RELEVANT_EMOTIONS}}
 
     filtered = {e: raw_counts.get(e, 0) for e in RELEVANT_EMOTIONS}
