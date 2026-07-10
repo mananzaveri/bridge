@@ -1,26 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChordPlayer from './ChordPlayer'
 import { COLORS } from './theme'
+
 
 function App() {
   const [lyrics, setLyrics] = useState('')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [waking, setWaking] = useState(true)
+  const [error, setError] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
+  useEffect(() => {
+  fetch(`${API_URL}/ping`)
+    .then(() => setWaking(false))
+    .catch(() => setWaking(false)) // fail quietly — handleSubmit will surface real errors
+}, [])
 
   const handleSubmit = async () => {
     if (!lyrics.trim()) return
     setLoading(true)
+    setError(null)
     try {
       const response = await fetch(`${API_URL}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lyrics })
       })
+      if (!response.ok) throw new Error(`Server responded ${response.status}`)
       const data = await response.json()
       setResult(data)
     } catch (e) {
       console.error('Failed to reach server:', e)
+      setError('Having trouble reaching the server — this can happen on the first request after inactivity. Try again in a few seconds.')
     } finally {
       setLoading(false)
     }
@@ -32,6 +44,11 @@ function App() {
       <p style={{ color: COLORS.textMuted, marginBottom: '24px', fontSize: '14px' }}>
         Paste your lyrics. Get a key and chords that match.
       </p>
+      {waking && (
+        <p style={{ color: COLORS.textMuted, fontSize: '13px', marginBottom: '16px' }}>
+          Waking up the server — first load can take up to 30 seconds.
+        </p>
+      )}
       <textarea
         value={lyrics}
         onChange={(e) => setLyrics(e.target.value)}
@@ -67,6 +84,11 @@ function App() {
       >
         {loading ? 'Analyzing...' : 'Analyze'}
       </button>
+      {error && (
+        <p style={{ color: '#e57373', fontSize: '14px', marginTop: '12px' }}>
+          {error}
+        </p>
+      )}
 
       {result && (
         <ChordPlayer
