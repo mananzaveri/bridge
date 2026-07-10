@@ -2,6 +2,13 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import random
 from nrclex import NRCLex
+import nltk
+
+for resource in ['punkt', 'punkt_tab', 'stopwords', 'wordnet']:
+    try:
+        nltk.download(resource, quiet=True)
+    except Exception as e:
+        print(f"NLTK download warning for {resource}: {e}")
 
 app = Flask(__name__)
 CORS(app)
@@ -28,6 +35,10 @@ def get_emotion_scores(lyrics):
     """
     text_object = NRCLex(lyrics[:512])
     raw_counts = text_object.raw_emotion_scores
+
+    if not raw_counts:
+        # Lexicon returned nothing usable — fall back to neutral rather than crashing
+        return {'neutral': 1.0, **{e: 0.0 for e in RELEVANT_EMOTIONS}}
 
     filtered = {e: raw_counts.get(e, 0) for e in RELEVANT_EMOTIONS}
     total = sum(filtered.values())
@@ -95,8 +106,6 @@ def analyze():
     data = request.get_json()
     lyrics = data.get('lyrics', '')
 
-    # return_all_scores=True gives us a list of dicts: [{label, score}, ...]
-    # We reshape it into a clean {emotion: score} dict for easier use
     emotion_scores = get_emotion_scores(lyrics)   
 
     primary_emotion = get_primary_emotion(emotion_scores)
